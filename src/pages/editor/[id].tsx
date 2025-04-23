@@ -16,7 +16,7 @@ import { useAuth } from "../../context/AuthContext"; // Adjusted path
 import { supabase } from "../../lib/supabaseClient"; // Adjusted path
 import ConfirmModal from "../../components/ConfirmModal"; // Import the modal
 
-const timeout = 120000;
+const timeout = 60000;
 
 // Debounce utility (for content saving later)
 function debounce<T extends (...args: any[]) => any>(
