@@ -236,7 +236,6 @@ export default function EditorPage() {
         }
         setSaveStatus("saved");
         setOriginalTitle(titleToSave.trim() || "Untitled Document");
-        setInitialContent(contentToSave);
       } catch (err: any) {
         console.error("Error saving document:", err);
         setError("Failed to save document.");
