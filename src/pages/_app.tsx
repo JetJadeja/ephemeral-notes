@@ -61,10 +61,8 @@ export default function App({ Component, pageProps }: NextAppProps) {
         <meta property="og:site_name" content="Transient" />
         <meta
           property="og:image"
-          content="https://opengraph.b-cdn.net/production/images/25788bcc-183a-4a92-9e9c-344dd3ab89ad.png?token=K7pclAMKzTJbeBaWVnai4-XYHds4n0LlajNaJUWmZdQ&height=600&width=1200&expires=33281445289"
+          content="https://transient-notes.com/static/TransientGreatness.png"
         />
-        <meta property="og:image:width" content="1200" />
-        <meta property="og:image:height" content="630" />
         <meta property="og:locale" content="en-US" />
         <meta property="og:type" content="website" />
       </Head>
