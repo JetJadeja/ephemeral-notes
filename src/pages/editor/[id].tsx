@@ -197,15 +197,8 @@ export default function EditorPage() {
   const saveDocumentDebounced = useCallback(
     debounce(async (contentToSave: string, titleToSave: string) => {
       if (!documentId || !user || !isEditable) return;
-
-      // Prevent saving if title hasn't actually changed from the last saved state
-      // Note: This assumes fetchDocument sets originalTitle correctly initially
-      // We might need a different check if saves happen frequently
-      // For now, we save both fields regardless on trigger
-
       setSaveStatus("saving");
-      setError(null); // Clear previous errors on new save attempt
-
+      setError(null);
       try {
         console.log("Saving document (combined):", {
           title: titleToSave,
@@ -214,8 +207,8 @@ export default function EditorPage() {
         const { error: updateError } = await supabase
           .from("documents")
           .update({
-            content: contentToSave,
-            title: titleToSave.trim() || "Untitled Document", // Ensure title isn't empty
+            content: contentToSave, // Save the combined content
+            title: titleToSave.trim() || "Untitled Document",
           })
           .eq("id", documentId)
           .eq("user_id", user.id);
@@ -224,24 +217,21 @@ export default function EditorPage() {
           throw updateError;
         }
         setSaveStatus("saved");
-        // Update originalTitle here to reflect the last successful save
         setOriginalTitle(titleToSave.trim() || "Untitled Document");
-        // Update initialContent to reflect the newly saved state
         setInitialContent(contentToSave);
       } catch (err: any) {
         console.error("Error saving document:", err);
         setError("Failed to save document.");
         setSaveStatus("error");
-        // Consider reverting title/content on error? Maybe too aggressive.
       }
-    }, 1500), // Debounce delay of 1.5 seconds
-    [documentId, user, isEditable] // Dependencies for useCallback
+    }, 500), // Reduced debounce delay to 500ms (0.5 seconds)
+    [documentId, user, isEditable] // Dependencies
   );
 
-  // --- Editor Change Handling (with persistence update) ---
+  // --- Editor Change Handling ---
   const handleEditorChange = (newEditorState: EditorState) => {
-    // Update visual editor state and timer map
-    const newBlocks = new Map();
+    // 1. Update visual editor state and timer map
+    const newBlocksMap = new Map();
     const currentTime = new Date().getTime();
     newEditorState
       .getCurrentContent()
@@ -252,31 +242,40 @@ export default function EditorPage() {
         if (oldBlockValue) {
           const [oldText] = oldBlockValue;
           if (oldText === newText) {
-            newBlocks.set(block.getKey(), oldBlockValue);
+            newBlocksMap.set(block.getKey(), oldBlockValue);
           } else {
-            newBlocks.set(block.getKey(), [newText, currentTime]);
+            newBlocksMap.set(block.getKey(), [newText, currentTime]);
           }
         } else {
-          newBlocks.set(block.getKey(), [newText, currentTime]);
+          newBlocksMap.set(block.getKey(), [newText, currentTime]);
         }
       });
-    setBlocks(newBlocks);
-    setEditorState(newEditorState);
+    setBlocks(newBlocksMap);
+    setEditorState(newEditorState); // Update visual state
 
-    // Get text currently visible in the editor
+    // 2. Get text currently visible in the editor
     const currentVisualText = newEditorState
       .getCurrentContent()
       .getPlainText("\n");
 
-    // Combine initial content with current visual text for saving
+    // 3. Combine initial content with current visual text
     const combinedContent = initialContent + currentVisualText;
 
-    // Update persistent state (optional, but good for consistency)
+    // 4. Update persistent state (tracks the full intended content)
     setPersistentContent(combinedContent);
 
-    // Trigger unified debounced save with combined content
+    // 5. Check if content has changed and update status immediately if needed
+    if (
+      isEditable &&
+      combinedContent !== initialContent &&
+      saveStatus === "saved"
+    ) {
+      setSaveStatus("saving"); // Show saving immediately on change
+    }
+
+    // 6. Trigger debounced save with the combined content
     if (isEditable) {
-      saveDocumentDebounced(combinedContent, title);
+      saveDocumentDebounced(combinedContent, title); // Pass current title state
     }
   };
 
