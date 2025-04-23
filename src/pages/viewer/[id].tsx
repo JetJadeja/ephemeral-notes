@@ -105,9 +105,7 @@ export default function ViewerPage() {
         <div className="flex justify-between items-center mb-4">
           {user ? (
             <Link href="/dashboard" legacyBehavior>
-              <a className="text-blue-500 hover:underline w-[80px] block">
-                &larr; Dashboard
-              </a>
+              <a className="text-blue-500 hover:underline">&larr; Dashboard</a>
             </Link>
           ) : (
             <span className="w-[80px]" aria-hidden="true">

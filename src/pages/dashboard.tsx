@@ -131,23 +131,22 @@ export default function Dashboard() {
       <div className="max-w-4xl mx-auto">
         <header className="flex justify-between items-center mb-8">
           <h1 className="text-3xl font-semibold text-gray-800">Transient</h1>
-          <button
-            onClick={handleSignOut}
-            className="px-4 py-2 text-sm font-medium text-white bg-red-500 rounded hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
-          >
-            Log Out
-          </button>
+          <div className="flex items-center gap-4">
+            <button
+              onClick={handleCreateDocument}
+              disabled={loading}
+              className="px-5 py-2 font-semibold text-white bg-blue-500 rounded hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {loading ? "Creating..." : "+ New Document"}
+            </button>
+            <button
+              onClick={handleSignOut}
+              className="px-4 py-2 text-sm font-medium text-white bg-red-500 rounded hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
+            >
+              Log Out
+            </button>
+          </div>
         </header>
-
-        <div className="mb-6">
-          <button
-            onClick={handleCreateDocument}
-            disabled={loading}
-            className="px-5 py-2 font-semibold text-white bg-blue-500 rounded hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {loading ? "Creating..." : "+ New Document"}
-          </button>
-        </div>
 
         {error && <p className="mb-4 text-red-600">Error: {error}</p>}
 
