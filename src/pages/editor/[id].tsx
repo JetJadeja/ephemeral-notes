@@ -77,17 +77,15 @@ export default function EditorPage() {
   // Existing state for editor visuals
   const [blocks, setBlocks] = useState(new Map());
   const [editorState, setEditorState] = useState(() =>
-    // Initialize empty, as requested
     EditorState.createEmpty(decorator)
   );
-
-  // New state for persistence and UI
-  const [persistentContent, setPersistentContent] = useState<string>("");
+  const [initialContent, setInitialContent] = useState<string>(""); // Added state for initial fetched content
+  const [persistentContent, setPersistentContent] = useState<string>(""); // Represents combined content
   const [title, setTitle] = useState("");
   const [isEditable, setIsEditable] = useState(true);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [saveStatus, setSaveStatus] = useState<SaveStatus>("idle"); // Added save status state
+  const [saveStatus, setSaveStatus] = useState<SaveStatus>("saved"); // Initialize saveStatus to 'saved'
   const [isTitleEditing, setIsTitleEditing] = useState(false); // State for title edit mode
   const titleInputRef = useRef<HTMLInputElement>(null); // Ref for focusing input
   const [originalTitle, setOriginalTitle] = useState(""); // Store original title for comparison
@@ -105,7 +103,7 @@ export default function EditorPage() {
     const fetchDocument = async () => {
       setLoading(true);
       setError(null);
-      setSaveStatus("idle");
+      setSaveStatus("saved");
 
       try {
         const { data, error: dbError } = await supabase
@@ -125,11 +123,16 @@ export default function EditorPage() {
 
         if (data) {
           const fetchedTitle = data.title || "Untitled Document";
+          const fetchedContent = data.content || "";
+
           setTitle(fetchedTitle);
-          setOriginalTitle(fetchedTitle); // Store original title
-          setPersistentContent(data.content || "");
+          setOriginalTitle(fetchedTitle);
+          setInitialContent(fetchedContent); // Store fetched content separately
+          setPersistentContent(fetchedContent); // Also init persistent content
           setIsEditable(data.is_editable);
-          // IMPORTANT: Do NOT set editorState here, keep it empty initially
+
+          // *** Initialize editorState empty again ***
+          setEditorState(EditorState.createEmpty(decorator));
         } else {
           throw new Error("Document data not found.");
         }
@@ -190,48 +193,54 @@ export default function EditorPage() {
     return () => clearInterval(timer);
   }, [blocks, editorState]);
 
-  // --- Save Title Logic ---
-  const saveTitleToDb = async (newTitle: string) => {
-    if (!documentId || !user || !isEditable || newTitle === originalTitle) {
-      setIsTitleEditing(false); // Exit edit mode even if no save needed
-      return; // No need to save if not editable or title hasn't changed
-    }
+  // --- Unified Debounced Save Logic ---
+  const saveDocumentDebounced = useCallback(
+    debounce(async (contentToSave: string, titleToSave: string) => {
+      if (!documentId || !user || !isEditable) return;
 
-    setSaveStatus("saving");
-    setError(null);
+      // Prevent saving if title hasn't actually changed from the last saved state
+      // Note: This assumes fetchDocument sets originalTitle correctly initially
+      // We might need a different check if saves happen frequently
+      // For now, we save both fields regardless on trigger
 
-    try {
-      const { error: updateError } = await supabase
-        .from("documents")
-        .update({ title: newTitle })
-        .eq("id", documentId)
-        .eq("user_id", user.id);
+      setSaveStatus("saving");
+      setError(null); // Clear previous errors on new save attempt
 
-      if (updateError) {
-        throw updateError;
+      try {
+        console.log("Saving document (combined):", {
+          title: titleToSave,
+          content: "...",
+        });
+        const { error: updateError } = await supabase
+          .from("documents")
+          .update({
+            content: contentToSave,
+            title: titleToSave.trim() || "Untitled Document", // Ensure title isn't empty
+          })
+          .eq("id", documentId)
+          .eq("user_id", user.id);
+
+        if (updateError) {
+          throw updateError;
+        }
+        setSaveStatus("saved");
+        // Update originalTitle here to reflect the last successful save
+        setOriginalTitle(titleToSave.trim() || "Untitled Document");
+        // Update initialContent to reflect the newly saved state
+        setInitialContent(contentToSave);
+      } catch (err: any) {
+        console.error("Error saving document:", err);
+        setError("Failed to save document.");
+        setSaveStatus("error");
+        // Consider reverting title/content on error? Maybe too aggressive.
       }
-      setSaveStatus("saved");
-      setOriginalTitle(newTitle); // Update original title after successful save
-      setTimeout(() => setSaveStatus("idle"), 2000); // Reset status after a delay
-    } catch (err: any) {
-      console.error("Error saving title:", err);
-      setError("Failed to save title.");
-      setSaveStatus("error");
-      setTitle(originalTitle); // Revert title on error
-    } finally {
-      setIsTitleEditing(false); // Ensure edit mode is exited
-    }
-  };
+    }, 1500), // Debounce delay of 1.5 seconds
+    [documentId, user, isEditable] // Dependencies for useCallback
+  );
 
   // --- Editor Change Handling (with persistence update) ---
   const handleEditorChange = (newEditorState: EditorState) => {
-    const currentFullText = newEditorState
-      .getCurrentContent()
-      .getPlainText("\n");
-    // Update persistent content state immediately
-    setPersistentContent(currentFullText);
-
-    // Existing logic to update blocks map for timer
+    // Update visual editor state and timer map
     const newBlocks = new Map();
     const currentTime = new Date().getTime();
     newEditorState
@@ -254,15 +263,28 @@ export default function EditorPage() {
     setBlocks(newBlocks);
     setEditorState(newEditorState);
 
-    // TODO LATER: Trigger debounced save for persistentContent
-    // saveContentDebounced(currentFullText);
-    // setSaveStatus('saving');
+    // Get text currently visible in the editor
+    const currentVisualText = newEditorState
+      .getCurrentContent()
+      .getPlainText("\n");
+
+    // Combine initial content with current visual text for saving
+    const combinedContent = initialContent + currentVisualText;
+
+    // Update persistent state (optional, but good for consistency)
+    setPersistentContent(combinedContent);
+
+    // Trigger unified debounced save with combined content
+    if (isEditable) {
+      saveDocumentDebounced(combinedContent, title);
+    }
   };
 
   // --- Title Edit Handlers ---
   const handleTitleClick = () => {
     if (isEditable) {
-      setOriginalTitle(title); // Store current title before editing starts
+      // Set original title state when starting edit
+      setOriginalTitle(title);
       setIsTitleEditing(true);
     }
   };
@@ -276,23 +298,34 @@ export default function EditorPage() {
   }, [isTitleEditing]);
 
   const handleTitleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setTitle(e.target.value);
+    const newTitle = e.target.value;
+    setTitle(newTitle);
+    // Trigger save with current PERSISTENT content and new title
+    if (isEditable) {
+      // Use persistentContent state here as it reflects the latest intended combo
+      saveDocumentDebounced(persistentContent, newTitle);
+    }
   };
 
   const handleTitleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter") {
-      e.preventDefault(); // Prevent potential form submission if wrapped
-      saveTitleToDb(title.trim() || "Untitled Document"); // Trim whitespace and save
+      e.preventDefault();
+      // No need to explicitly save, just blur to exit edit mode
+      titleInputRef.current?.blur();
     }
     if (e.key === "Escape") {
-      setTitle(originalTitle); // Revert on Escape
+      setTitle(originalTitle); // Revert to original title on Escape
       setIsTitleEditing(false);
     }
   };
 
   const handleTitleBlur = () => {
-    // Save on blur only if the title has actually changed
-    saveTitleToDb(title.trim() || "Untitled Document");
+    // Simply exit edit mode. Debounce handles the save.
+    // Trim title just before exiting edit mode for display consistency
+    setTitle((prev) => prev.trim() || "Untitled Document");
+    setIsTitleEditing(false);
+    // Optional: trigger one last save explicitly? Usually debounce is enough.
+    // if (isEditable) { saveDocumentDebounced(persistentContent, title.trim() || "Untitled Document"); }
   };
 
   // --- UI Rendering with Loading/Error States ---
@@ -313,6 +346,11 @@ export default function EditorPage() {
 
   // Cast Editor to any to bypass JSX component type checking
   const DraftEditor = Editor as any;
+
+  const showHiddenContentNotification =
+    !loading &&
+    initialContent &&
+    editorState.getCurrentContent().getPlainText("").length === 0;
 
   return (
     // Added min-h-screen to ensure layout fills height
@@ -362,6 +400,13 @@ export default function EditorPage() {
             {/* TODO LATER: Add Publish Button */}
           </div>
         </div>
+
+        {/* Hidden Content Notification */}
+        {showHiddenContentNotification && (
+          <div className="text-center text-sm text-gray-500 mb-2 p-2 bg-gray-100 rounded">
+            Previously saved content is hidden. Continue typing to add to it.
+          </div>
+        )}
 
         {/* Editor Area - Removed border */}
         <div
