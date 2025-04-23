@@ -54,7 +54,7 @@ export default function Home() {
 
         {/* Credit Line - Removed extra margin-top */}
         <p className="text-xs text-gray-500">
-          Inspired by (forked from) "ephemeral notes" by Will Depue.
+          Inspired by (forked from) &quot;ephemeral notes&quot; by Will Depue.
         </p>
       </div>
     </div>
