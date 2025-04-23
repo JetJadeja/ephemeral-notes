@@ -334,13 +334,14 @@ export default function EditorPage() {
                 onChange={handleTitleInputChange}
                 onKeyDown={handleTitleKeyDown}
                 onBlur={handleTitleBlur}
-                className="text-xl font-semibold text-gray-700 p-1 border-b border-blue-500 focus:outline-none w-full text-center bg-transparent"
+                className="text-xl font-semibold text-gray-700 p-1 border-b border-blue-500 focus:outline-none w-auto inline-block text-center bg-transparent"
+                size={Math.max(10, title.length || 15)}
               />
             ) : (
               <h1
                 onClick={handleTitleClick}
                 className={`text-xl font-semibold text-gray-700 truncate p-1 ${
-                  isEditable ? "cursor-pointer hover:bg-gray-100 rounded" : ""
+                  isEditable ? "cursor-pointer" : ""
                 }`}
                 title={isEditable ? "Click to edit title" : title}
               >
