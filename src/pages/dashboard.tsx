@@ -3,6 +3,7 @@ import { useRouter } from "next/router";
 import Link from "next/link";
 import { useAuth } from "../context/AuthContext";
 import { supabase } from "../lib/supabaseClient";
+import ConfirmModal from "../components/ConfirmModal";
 
 type Document = {
   id: string;
@@ -18,6 +19,8 @@ export default function Dashboard() {
   const [documents, setDocuments] = useState<Document[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
+  const [deletingDocId, setDeletingDocId] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchDocuments = async () => {
@@ -78,6 +81,46 @@ export default function Dashboard() {
     // setLoading(false) will be handled implicitly by navigation on success
   };
 
+  const handleDeleteClick = (docId: string) => {
+    setDeletingDocId(docId);
+    setIsConfirmModalOpen(true);
+  };
+
+  const confirmDeleteAction = async () => {
+    if (!deletingDocId || !user) return;
+
+    setIsConfirmModalOpen(false);
+    setError(null);
+
+    try {
+      console.log("Deleting document:", deletingDocId);
+      const { error: deleteError } = await supabase
+        .from("documents")
+        .delete()
+        .eq("id", deletingDocId)
+        .eq("user_id", user.id);
+
+      if (deleteError) {
+        throw deleteError;
+      }
+
+      setDocuments((prevDocs) =>
+        prevDocs.filter((doc) => doc.id !== deletingDocId)
+      );
+      console.log("Document deleted successfully.");
+    } catch (err: any) {
+      console.error("Error deleting document:", err);
+      setError(err.message || "Failed to delete document.");
+    } finally {
+      setDeletingDocId(null);
+    }
+  };
+
+  const cancelDeleteAction = () => {
+    setDeletingDocId(null);
+    setIsConfirmModalOpen(false);
+  };
+
   const handleSignOut = async () => {
     await signOut();
     // The AuthProvider listener in _app.tsx will handle redirecting to /auth
@@ -121,10 +164,18 @@ export default function Dashboard() {
               </li>
             )}
             {documents.map((doc) => (
-              <li key={doc.id}>
-                <Link href={`/editor/${doc.id}`} legacyBehavior>
-                  <a className="block hover:bg-gray-50">
-                    <div className="px-4 py-4 sm:px-6 flex justify-between items-center">
+              <li
+                key={doc.id}
+                className="flex justify-between items-center hover:bg-gray-50"
+              >
+                <Link
+                  href={
+                    doc.is_editable ? `/editor/${doc.id}` : `/viewer/${doc.id}`
+                  }
+                  legacyBehavior
+                >
+                  <a className="flex-grow block px-4 py-4 sm:px-6">
+                    <div className="flex items-center justify-between">
                       <div>
                         <p className="text-lg font-medium text-indigo-600 truncate">
                           {doc.title}
@@ -137,18 +188,60 @@ export default function Dashboard() {
                       <div className="ml-2 flex-shrink-0 flex">
                         {!doc.is_editable && (
                           <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-gray-100 text-gray-800">
-                            Read-only
+                            Published
                           </span>
                         )}
                       </div>
                     </div>
                   </a>
                 </Link>
+                <div className="px-4 flex-shrink-0">
+                  <button
+                    onClick={(e) => {
+                      handleDeleteClick(doc.id);
+                    }}
+                    title="Delete document"
+                    className="p-1 text-gray-400 hover:text-red-600 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 rounded-full"
+                  >
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      className="h-5 w-5"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                      strokeWidth={2}
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                      />
+                    </svg>
+                  </button>
+                </div>
               </li>
             ))}
           </ul>
         </div>
       </div>
+
+      <ConfirmModal
+        isOpen={isConfirmModalOpen}
+        onClose={cancelDeleteAction}
+        onConfirm={confirmDeleteAction}
+        title="Delete Document?"
+        message={
+          <p>
+            Are you sure you want to delete this document?
+            <strong className="font-semibold block mt-1 text-red-700">
+              This action cannot be undone.
+            </strong>
+          </p>
+        }
+        confirmButtonText="Delete"
+        cancelButtonText="Cancel"
+        confirmButtonClass="bg-red-600 hover:bg-red-700"
+      />
     </div>
   );
 }
