@@ -1,31 +1,75 @@
-<img width="1200" alt="OpenGraphEphemeral" src="https://github.com/0hq/ephemeral-notes/assets/30643741/6e7cba7a-bcfd-4f22-b610-16ff43d56d61">
+<img width="1200" alt="Transient Notes Screenshot" src="https://github.com/0hq/ephemeral-notes/assets/30643741/6e7cba7a-bcfd-4f22-b610-16ff43d56d61">
 
-## Ephemeral Notes
+## Transient
 
-To write is to think. It’s the greatest tool we have.
+**_Write to think, without the clutter._**
 
-But it’s easy to slip out of writing to think into thinking to write. This is a writing tool that forces you to think.
+Transient is a minimalist web-based notepad designed to enhance focus and encourage stream-of-consciousness thinking. Based on the concept of "ephemeral notes," text you type gradually fades away shortly after being written (currently visual-only, persistent content is saved).
 
-Ephemeral is a disappearing notepad: where all of your notes slowly fade over time.
+This forces you to keep moving forward, capturing thoughts without getting bogged down by editing or formatting. Unlike purely ephemeral tools, Transient allows you to:
 
-All words take 60 seconds to fully disappear. If you want to keep something, feel free to write it again - the same way you would call a thought back from memory.
+- **Save your work:** Documents are tied to your user account.
+- **Persist content:** Your full thoughts are saved, even as the visual text fades.
+- **Publish:** Finalize a document to make it read-only and shareable.
 
-There’s no formatting tools, no bold, no italics, nothing. How much time do we spending obsessing over the way things look, rather than the thinking itself?
+The goal is to provide a space for focused thinking and drafting, reducing the friction between thought and text, while still allowing you to retain and share your work when ready.
 
-This tool is intended to be used as you are deep in thought and want to boost your working memory, need to sketch something out when you can’t picture it in your head, or need to channel your stream of consciousness.
+### Features
 
-[Try it out yourself](https://ephemeral-notes.com/).
+- **Fading Text Editor:** Uses Draft.js to create a visual effect where typed text fades.
+- **User Authentication:** Sign up and log in to manage your documents (powered by Supabase Auth).
+- **Document Persistence:** Save and automatically update documents in the background (using Supabase Database).
+- **Document Publishing:** Make documents read-only and publicly viewable.
+- **Clean, Minimalist UI:** Focus purely on the text.
+
+### Tech Stack
+
+- **Framework:** [Next.js](https://nextjs.org/)
+- **Language:** [TypeScript](https://www.typescriptlang.org/)
+- **Styling:** [Tailwind CSS](https://tailwindcss.com/)
+- **Editor:** [Draft.js](https://draftjs.org/)
+- **Backend & Database:** [Supabase](https://supabase.io/)
 
 ### Development
 
-This is a [Next.js](https://nextjs.org/) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
+To get started with development:
 
-Run the development server:
+1.  **Clone the repository:**
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-```
+    ```bash
+    git clone https://github.com/your-username/your-repo-name.git # Replace with your repo URL
+    cd your-repo-name
+    ```
+
+2.  **Install dependencies:**
+    Choose your package manager:
+
+    ```bash
+    npm install
+    # or
+    yarn install
+    # or
+    pnpm install
+    ```
+
+3.  **Set up Environment Variables:**
+    You'll need a Supabase project. Create one at [supabase.com](https://supabase.com/).
+    Create a `.env.local` file in the root of the project and add your Supabase URL and Anon Key:
+
+    ```.env.local
+    NEXT_PUBLIC_SUPABASE_URL=YOUR_SUPABASE_URL
+    NEXT_PUBLIC_SUPABASE_ANON_KEY=YOUR_SUPABASE_ANON_KEY
+    ```
+
+    Replace `YOUR_SUPABASE_URL` and `YOUR_SUPABASE_ANON_KEY` with your actual Supabase project credentials.
+
+4.  **Run the development server:**
+    ```bash
+    npm run dev
+    # or
+    yarn dev
+    # or
+    pnpm dev
+    ```
+
+Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.

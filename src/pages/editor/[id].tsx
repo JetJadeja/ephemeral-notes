@@ -505,14 +505,6 @@ export default function EditorPage() {
             readOnly={!isEditable}
           />
         </div>
-
-        {/* Removed original header text */}
-        {/* <div className="flex flex-row items-center justify-between w-full">
-          <p className="text-black opacity-60 mb-2.5 font-semibold">
-            Ephemeral Notes
-          </p>
-          <p className="text-black opacity-60 mb-2.5 font-light text-sm">60s</p>
-        </div> */}
       </div>
 
       {/* --- Confirmation Modal --- */}
