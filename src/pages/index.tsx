@@ -1,9 +1,8 @@
-
 import { useRouter } from "next/router";
 import { useState } from "react";
 
 export default function Home() {
-  const router = useRouter()
+  const router = useRouter();
 
   const [text, setText] = useState(
     `This project came from a conversation I had with a friend about how to properly use written notes and Google Docs to amplify the thought process, and the ways in which the appearance of organization, clarity, and infinite space can deceive and hurt us.
@@ -40,7 +39,7 @@ export default function Home() {
     } else {
       setPageState(3);
       setTimeout(() => {
-        router.push("/editor");
+        router.push("/dashboard");
       }, 1500); // Adjust timing to match CSS transition
     }
   };
@@ -49,15 +48,19 @@ export default function Home() {
     <div className="flex flex-col items-center justify-between p-12 text-[#6a6a6a]">
       <div className="flex flex-col mt-2 pt-2 max-w-[600px] flex-shrink items-start">
         <div className={`${pageState % 2 == 0 ? "fade-in" : "fade-out"}`}>
-          {text.split("\n").map((line, i) => <p className="mb-8" key={i}>{line}</p>)}
-          <button onClick={updateState} className={"underline mt-1 text-medium"}>
-            {pageState > 1 ? 'Start' : 'Next'} -&gt;
+          {text.split("\n").map((line, i) => (
+            <p className="mb-8" key={i}>
+              {line}
+            </p>
+          ))}
+          <button
+            onClick={updateState}
+            className={"underline mt-1 text-medium"}
+          >
+            {pageState > 1 ? "Start" : "Next"} -&gt;
           </button>
         </div>
       </div>
     </div>
   );
-};
-
-
-
+}

@@ -1,0 +1,154 @@
+import { useState, useEffect } from "react";
+import { useRouter } from "next/router";
+import Link from "next/link";
+import { useAuth } from "../context/AuthContext";
+import { supabase } from "../lib/supabaseClient";
+
+type Document = {
+  id: string;
+  title: string;
+  created_at: string;
+  updated_at: string;
+  is_editable: boolean;
+};
+
+export default function Dashboard() {
+  const { user, signOut } = useAuth();
+  const router = useRouter();
+  const [documents, setDocuments] = useState<Document[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchDocuments = async () => {
+      if (!user) return; // Should not happen due to route protection, but good practice
+
+      setLoading(true);
+      setError(null);
+
+      try {
+        const { data, error: dbError } = await supabase
+          .from("documents")
+          .select("id, title, created_at, updated_at, is_editable")
+          .eq("user_id", user.id)
+          .order("updated_at", { ascending: false });
+
+        if (dbError) {
+          throw dbError;
+        }
+
+        setDocuments(data || []);
+      } catch (err: any) {
+        console.error("Error fetching documents:", err);
+        setError(err.message || "Failed to load documents.");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchDocuments();
+  }, [user]); // Re-fetch if user changes (e.g., logout/login)
+
+  const handleCreateDocument = async () => {
+    if (!user) return;
+    setLoading(true); // Use loading state for creation as well
+    setError(null);
+
+    try {
+      const { data, error: insertError } = await supabase
+        .from("documents")
+        .insert([{ user_id: user.id, title: "Untitled Document" }]) // Use default title from schema
+        .select("id") // Only select the ID of the new document
+        .single(); // Expecting a single record back
+
+      if (insertError) {
+        throw insertError;
+      }
+
+      if (data?.id) {
+        router.push(`/editor/${data.id}`);
+      } else {
+        throw new Error("Failed to create document or retrieve ID.");
+      }
+    } catch (err: any) {
+      console.error("Error creating document:", err);
+      setError(err.message || "Failed to create new document.");
+      setLoading(false); // Stop loading on error
+    }
+    // setLoading(false) will be handled implicitly by navigation on success
+  };
+
+  const handleSignOut = async () => {
+    await signOut();
+    // The AuthProvider listener in _app.tsx will handle redirecting to /auth
+  };
+
+  return (
+    <div className="min-h-screen bg-gray-50 p-8">
+      <div className="max-w-4xl mx-auto">
+        <header className="flex justify-between items-center mb-8">
+          <h1 className="text-3xl font-semibold text-gray-800">Dashboard</h1>
+          <button
+            onClick={handleSignOut}
+            className="px-4 py-2 text-sm font-medium text-white bg-red-500 rounded hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
+          >
+            Log Out
+          </button>
+        </header>
+
+        <div className="mb-6">
+          <button
+            onClick={handleCreateDocument}
+            disabled={loading}
+            className="px-5 py-2 font-semibold text-white bg-blue-500 rounded hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {loading ? "Creating..." : "+ New Document"}
+          </button>
+        </div>
+
+        {error && <p className="mb-4 text-red-600">Error: {error}</p>}
+
+        <div className="bg-white shadow overflow-hidden sm:rounded-md">
+          <ul role="list" className="divide-y divide-gray-200">
+            {loading && documents.length === 0 && (
+              <li className="px-6 py-4 text-center text-gray-500">
+                Loading documents...
+              </li>
+            )}
+            {!loading && documents.length === 0 && (
+              <li className="px-6 py-4 text-center text-gray-500">
+                No documents yet. Create one to get started!
+              </li>
+            )}
+            {documents.map((doc) => (
+              <li key={doc.id}>
+                <Link href={`/editor/${doc.id}`} legacyBehavior>
+                  <a className="block hover:bg-gray-50">
+                    <div className="px-4 py-4 sm:px-6 flex justify-between items-center">
+                      <div>
+                        <p className="text-lg font-medium text-indigo-600 truncate">
+                          {doc.title}
+                        </p>
+                        <p className="text-sm text-gray-500">
+                          Last updated:{" "}
+                          {new Date(doc.updated_at).toLocaleString()}
+                        </p>
+                      </div>
+                      <div className="ml-2 flex-shrink-0 flex">
+                        {!doc.is_editable && (
+                          <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-gray-100 text-gray-800">
+                            Read-only
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </a>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </div>
+      </div>
+    </div>
+  );
+}
