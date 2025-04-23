@@ -80,15 +80,15 @@ export default function ViewerPage() {
 
   if (error) {
     return (
-      <div className="p-8 text-red-600 text-center">
+      <div className="p-8 text-gray-700 font-semibold text-center">
         <p>Error: {error}</p>
         {/* Optionally provide a link back */}
         <Link href="/" legacyBehavior>
-          <a className="text-blue-500 hover:underline">Go Home</a>
+          <a className="text-gray-800 hover:underline">Go Home</a>
         </Link>
         {user && (
           <Link href="/dashboard" legacyBehavior>
-            <a className="ml-4 text-blue-500 hover:underline">
+            <a className="ml-4 text-gray-800 hover:underline">
               Go to Dashboard
             </a>
           </Link>
@@ -105,7 +105,7 @@ export default function ViewerPage() {
         <div className="flex justify-between items-center mb-4">
           {user ? (
             <Link href="/dashboard" legacyBehavior>
-              <a className="text-blue-500 hover:underline">&larr; Dashboard</a>
+              <a className="text-gray-800 hover:underline">&larr; Dashboard</a>
             </Link>
           ) : (
             <span className="w-[80px]" aria-hidden="true">
@@ -122,6 +122,9 @@ export default function ViewerPage() {
             &nbsp;
           </span>
         </div>
+
+        {/* Add a horizontal rule for separation */}
+        <hr className="my-6 border-gray-300" />
 
         {/* Read-only Content Area */}
         <div className="flex-grow rounded p-4 bg-white whitespace-pre-wrap break-words overflow-auto text-gray-800">

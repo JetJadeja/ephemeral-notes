@@ -404,10 +404,10 @@ export default function EditorPage() {
 
   if (error && !isTitleEditing) {
     return (
-      <div className="p-8 text-red-600 text-center">
+      <div className="p-8 text-gray-700 font-semibold text-center">
         <p>Error: {error}</p>
         <Link href="/dashboard" legacyBehavior>
-          <a className="text-blue-500 hover:underline">Back to Dashboard</a>
+          <a className="text-gray-800 hover:underline">Back to Dashboard</a>
         </Link>
       </div>
     );
@@ -429,7 +429,7 @@ export default function EditorPage() {
         {/* Simple Header: Back Button and Title (Title Input later) */}
         <div className="flex justify-between items-center mb-4">
           <Link href="/dashboard" legacyBehavior>
-            <a className="text-blue-500 hover:underline">&larr; Dashboard</a>
+            <a className="text-gray-800 hover:underline">&larr; Dashboard</a>
           </Link>
           {/* Title Display/Input Area */}
           <div className="flex-grow mx-4 text-center">
@@ -441,7 +441,7 @@ export default function EditorPage() {
                 onChange={handleTitleInputChange}
                 onKeyDown={handleTitleKeyDown}
                 onBlur={handleTitleBlur}
-                className="text-xl font-semibold text-gray-700 p-1 border-b border-blue-500 focus:outline-none w-auto inline-block text-center bg-transparent"
+                className="text-xl font-semibold text-gray-700 p-1 border-b border-gray-500 focus:outline-none w-auto inline-block text-center bg-transparent"
                 size={Math.max(10, title.length || 15)}
               />
             ) : (
@@ -474,7 +474,7 @@ export default function EditorPage() {
                 className={`px-3 py-1 text-sm rounded ${
                   publishing || saveStatus === "saving"
                     ? "bg-gray-400 text-gray-700 cursor-not-allowed"
-                    : "bg-blue-500 hover:bg-blue-600 text-white"
+                    : "bg-black text-white hover:bg-gray-800"
                 }`}
               >
                 {publishing ? "Publishing..." : "Publish"}
@@ -524,7 +524,7 @@ export default function EditorPage() {
         message={
           <p>
             Publishing this document will make it publicly viewable and
-            <strong className="font-semibold">
+            <strong className="font-semibold text-black">
               {" "}
               permanently disable editing
             </strong>
@@ -533,7 +533,7 @@ export default function EditorPage() {
         }
         confirmButtonText="Publish"
         cancelButtonText="Cancel"
-        confirmButtonClass="bg-red-600 hover:bg-red-700" // Ensure red button style
+        confirmButtonClass="bg-black text-white hover:bg-gray-800"
       />
     </div>
   );

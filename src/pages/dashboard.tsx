@@ -135,20 +135,22 @@ export default function Dashboard() {
             <button
               onClick={handleCreateDocument}
               disabled={loading}
-              className="px-5 py-2 font-semibold text-white bg-blue-500 rounded hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="px-5 py-2 font-semibold text-white bg-black rounded hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {loading ? "Creating..." : "+ New Document"}
             </button>
             <button
               onClick={handleSignOut}
-              className="px-4 py-2 text-sm font-medium text-white bg-red-500 rounded hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
+              className="px-4 py-2 text-sm font-medium text-gray-800 bg-gray-200 rounded hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2"
             >
               Log Out
             </button>
           </div>
         </header>
 
-        {error && <p className="mb-4 text-red-600">Error: {error}</p>}
+        {error && (
+          <p className="mb-4 text-gray-700 font-semibold">Error: {error}</p>
+        )}
 
         <div className="bg-white shadow overflow-hidden sm:rounded-md">
           <ul role="list" className="divide-y divide-gray-200">
@@ -173,10 +175,10 @@ export default function Dashboard() {
                   }
                   legacyBehavior
                 >
-                  <a className="flex-grow block px-4 py-4 sm:px-6">
+                  <a className="flex-grow block px-4 py-4 sm:px-6 hover:underline">
                     <div className="flex items-center justify-between">
                       <div>
-                        <p className="text-lg font-medium text-indigo-600 truncate">
+                        <p className="text-lg font-medium text-gray-800 truncate">
                           {doc.title}
                         </p>
                         <p className="text-sm text-gray-500">
@@ -200,7 +202,7 @@ export default function Dashboard() {
                       handleDeleteClick(doc.id);
                     }}
                     title="Delete document"
-                    className="p-1 text-gray-400 hover:text-red-600 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 rounded-full"
+                    className="p-1 text-gray-400 hover:text-black focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 rounded-full"
                   >
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
@@ -232,14 +234,14 @@ export default function Dashboard() {
         message={
           <p>
             Are you sure you want to delete this document?
-            <strong className="font-semibold block mt-1 text-red-700">
+            <strong className="font-semibold block mt-1 text-black">
               This action cannot be undone.
             </strong>
           </p>
         }
         confirmButtonText="Delete"
         cancelButtonText="Cancel"
-        confirmButtonClass="bg-red-600 hover:bg-red-700"
+        confirmButtonClass="bg-black text-white hover:bg-gray-800"
       />
     </div>
   );
