@@ -382,6 +382,8 @@ export default function EditorPage() {
       console.log("Document published successfully.");
       // Optional: Could redirect here: router.push(`/viewer/${documentId}`);
       // For now, we just disable editing.
+      // Redirect to the viewer page after successful publish
+      router.push(`/viewer/${documentId}`);
     } catch (err: any) {
       console.error("Error publishing document:", err);
       setError("Failed to publish document.");
