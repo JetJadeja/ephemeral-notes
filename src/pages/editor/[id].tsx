@@ -258,8 +258,15 @@ export default function EditorPage() {
       .getCurrentContent()
       .getPlainText("\n");
 
-    // 3. Combine initial content with current visual text
-    const combinedContent = initialContent + currentVisualText;
+    // 3. Combine initial content with current visual text, adding a newline if needed
+    let combinedContent = "";
+    if (initialContent !== "" && currentVisualText !== "") {
+      // Add newline only if initial content exists and visual text is being added
+      combinedContent = initialContent + "\n" + currentVisualText;
+    } else {
+      // Handle cases where either initial or visual is empty
+      combinedContent = initialContent + currentVisualText;
+    }
 
     // 4. Update persistent state (tracks the full intended content)
     setPersistentContent(combinedContent);
