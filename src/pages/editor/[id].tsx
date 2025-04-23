@@ -14,6 +14,7 @@ import { useRouter } from "next/router";
 import Link from "next/link";
 import { useAuth } from "../../context/AuthContext"; // Adjusted path
 import { supabase } from "../../lib/supabaseClient"; // Adjusted path
+import ConfirmModal from "../../components/ConfirmModal"; // Import the modal
 
 const timeout = 120000;
 
@@ -89,6 +90,8 @@ export default function EditorPage() {
   const [isTitleEditing, setIsTitleEditing] = useState(false); // State for title edit mode
   const titleInputRef = useRef<HTMLInputElement>(null); // Ref for focusing input
   const [originalTitle, setOriginalTitle] = useState(""); // Store original title for comparison
+  const [publishing, setPublishing] = useState(false); // State for publishing process
+  const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false); // State for modal visibility
 
   // --- Data Fetching ---
   useEffect(() => {
@@ -122,6 +125,16 @@ export default function EditorPage() {
         }
 
         if (data) {
+          // *** Check if document is editable ***
+          if (!data.is_editable) {
+            // If not editable (published), redirect to viewer
+            console.log("Document is published. Redirecting to viewer...");
+            router.replace(`/viewer/${documentId}`);
+            // No need to set state further for the editor page if redirecting
+            return; // Exit early
+          }
+
+          // If editable, proceed to set state for the editor
           const fetchedTitle = data.title || "Untitled Document";
           const fetchedContent = data.content || "";
 
@@ -140,13 +153,18 @@ export default function EditorPage() {
         console.error("Error fetching document:", err);
         setError(err.message || "Failed to load document.");
       } finally {
-        setLoading(false);
+        // Only set loading to false if not redirecting
+        // setLoading(false); // setLoading handled implicitly by redirect or successful load
+        // Let's ensure loading is always set to false if we didn't redirect
+        if (router.asPath.startsWith("/editor/")) {
+          setLoading(false);
+        }
       }
     };
 
     fetchDocument();
     // Add user?.id to dependency array to refetch if user changes
-  }, [documentId, user?.id]);
+  }, [documentId, user?.id, router]); // Added router to dependency array
 
   // --- Existing timer logic for visual clearing ---
   useEffect(() => {
@@ -334,6 +352,50 @@ export default function EditorPage() {
     // if (isEditable) { saveDocumentDebounced(persistentContent, title.trim() || "Untitled Document"); }
   };
 
+  // --- Modified Publish Handler: Opens Modal ---
+  const handlePublish = () => {
+    // Don't open modal if already publishing or saving
+    if (!isEditable || publishing || saveStatus === "saving") return;
+    setIsConfirmModalOpen(true); // Open the confirmation modal
+  };
+
+  // --- Actual Publish Logic (called by Modal) ---
+  const confirmPublishAction = async () => {
+    setIsConfirmModalOpen(false); // Close modal first
+    if (!documentId || !user || !isEditable || publishing) return;
+
+    setPublishing(true);
+    setError(null); // Clear previous errors
+
+    try {
+      console.log("Publishing document:", documentId);
+      const { error: updateError } = await supabase
+        .from("documents")
+        .update({ is_editable: false })
+        .eq("id", documentId)
+        .eq("user_id", user.id);
+
+      if (updateError) {
+        throw updateError;
+      }
+
+      setIsEditable(false); // Update local state immediately
+      console.log("Document published successfully.");
+      // Optional: Could redirect here: router.push(`/viewer/${documentId}`);
+      // For now, we just disable editing.
+    } catch (err: any) {
+      console.error("Error publishing document:", err);
+      setError("Failed to publish document.");
+      // Optionally reset saveStatus or show a specific publish error state
+    } finally {
+      setPublishing(false);
+    }
+  };
+
+  const cancelPublishAction = () => {
+    setIsConfirmModalOpen(false);
+  };
+
   // --- UI Rendering with Loading/Error States ---
   if (loading) {
     return <div className="p-8 text-center">Loading document...</div>;
@@ -394,16 +456,29 @@ export default function EditorPage() {
             )}
           </div>
           {/* Status and Actions Area */}
-          <div className="flex items-center min-w-[150px] justify-end">
+          <div className="flex items-center min-w-[200px] justify-end gap-4">
             {" "}
-            {/* Added min-width */}
-            <span className="text-sm text-gray-500 mr-4">
+            {/* Increased min-width and added gap */}
+            <span className="text-sm text-gray-500">
               {saveStatus === "saving" && "Saving..."}
-              {saveStatus === "saved" && "Saved"}
-              {/* Show general error only if not related to title edit */}
+              {saveStatus === "saved" && !publishing && "Saved"}
               {saveStatus === "error" && error && "Save Error"}
+              {publishing && "Publishing..."}
             </span>
-            {/* TODO LATER: Add Publish Button */}
+            {/* Publish Button - Now triggers modal */}
+            {isEditable && (
+              <button
+                onClick={handlePublish} // Opens the modal
+                disabled={publishing || saveStatus === "saving"}
+                className={`px-3 py-1 text-sm rounded ${
+                  publishing || saveStatus === "saving"
+                    ? "bg-gray-400 text-gray-700 cursor-not-allowed"
+                    : "bg-blue-500 hover:bg-blue-600 text-white"
+                }`}
+              >
+                {publishing ? "Publishing..." : "Publish"}
+              </button>
+            )}
           </div>
         </div>
 
@@ -438,6 +513,27 @@ export default function EditorPage() {
           <p className="text-black opacity-60 mb-2.5 font-light text-sm">60s</p>
         </div> */}
       </div>
+
+      {/* --- Confirmation Modal --- */}
+      <ConfirmModal
+        isOpen={isConfirmModalOpen}
+        onClose={cancelPublishAction}
+        onConfirm={confirmPublishAction}
+        title="Publish Document?"
+        message={
+          <p>
+            Publishing this document will make it publicly viewable and
+            <strong className="font-semibold">
+              {" "}
+              permanently disable editing
+            </strong>
+            . Are you sure you want to proceed?
+          </p>
+        }
+        confirmButtonText="Publish"
+        cancelButtonText="Cancel"
+        confirmButtonClass="bg-red-600 hover:bg-red-700" // Ensure red button style
+      />
     </div>
   );
 }
