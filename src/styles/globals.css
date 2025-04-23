@@ -8,8 +8,12 @@ body {
 }
 
 @keyframes fadeOut {
-  from { opacity: 1; }
-  to { opacity: 0; }
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
 }
 
 /* .fade {
@@ -21,7 +25,7 @@ body {
 div.DraftEditor-root {
   border: 0px;
   background-color: white;
-  color: #6A6A6A;
+  color: #6a6a6a;
   font-size: 14px;
   height: 100%;
   width: 100%;
@@ -32,9 +36,9 @@ div.DraftEditor-root {
     width: 0px;
     background: transparent; /* make scrollbar transparent */
   }
-  border-top: #C9C9C9 2px solid;
+  border-top: #c9c9c9 2px solid;
   padding-top: 10px;
-  transition: height 1s ease-in-out;  /* Adjust duration and easing as needed */
+  transition: height 1s ease-in-out; /* Adjust duration and easing as needed */
 }
 div.DraftEditor-editorContainer,
 div.public-DraftEditor-content {
@@ -42,14 +46,14 @@ div.public-DraftEditor-content {
 }
 
 .faded {
-  height: 20px;  /* Or whatever the height of your blocks are */
+  height: 20px; /* Or whatever the height of your blocks are */
   overflow: hidden;
   width: 0;
 }
 
 .DraftEditor-root {
   /* Other styles... */
-  transition: height 1s ease-in-out;  /* Adjust duration and easing as needed */
+  transition: height 1s ease-in-out; /* Adjust duration and easing as needed */
 }
 
 .fade-in {
